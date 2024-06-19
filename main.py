@@ -21,6 +21,18 @@ def draw(h,w,food,snake) :
         print(i)
     print("\n")
 
+def danger(y,x,snake,h,w,food) :
+    dangerc = list(tuple(snake[0]))
+    dangerl = 1
+    while [dangerc[0]+y,dangerc[1]+x] not in snake[1:-1] and [dangerc[0]+y,dangerc[1]+x] != food and dangerc[0]+y in range(h) and dangerc[1]+x in range(w) :
+        dangerc[0] += y
+        dangerc[1] += x
+        dangerl += 1
+    if [dangerc[0]+y,dangerc[1]+x] == food :
+        return 1/dangerl
+    else :
+        return -1/dangerl
+
 generation = 0
 pygame.init()
 hieght = 400
@@ -69,19 +81,13 @@ def main(genomes, config):
                 if n not in deadsnakes:
                     foodx = (foods[n][1] - snakes[n][0][1])/w
                     foody = (foods[n][0] - snakes[n][0][0])/h
-                    input = [foodx,-foodx,foody,-foody,(foodx**2 + foody**2)**(1/2),snakes[n][0][1]/w,snakes[n][0][0]/h,1-snakes[n][0][1]/w,1-snakes[n][0][0]/h]
-                    #[snakes[n][0][0] + snakes[n][0][0] - snakes[n][1][0] + snakes[n][0][1] - snakes[n][1][1],snakes[n][0][1] + snakes[n][0][1] - snakes[n][1][1] + snakes[n][1][0] - snakes[n][0][0]],[snakes[n][0][0] + snakes[n][0][0] - snakes[n][1][0] + snakes[n][1][1] - snakes[n][0][1],snakes[n][0][1] + snakes[n][0][1] - snakes[n][1][1] + snakes[n][0][0] - snakes[n][1][0]]
-                    positions = [[snakes[n][0][0] + snakes[n][0][0] - snakes[n][1][0], snakes[n][0][1] + snakes[n][0][1] - snakes[n][1][1]],[snakes[n][0][0] + snakes[n][0][1] - snakes[n][1][1],snakes[n][0][1] + snakes[n][1][0] - snakes[n][0][0]],[snakes[n][0][0] + snakes[n][1][1] - snakes[n][0][1], snakes[n][0][1] + snakes[n][0][0] - snakes[n][1][0] ]]
-                    for pos in positions :
-                        if [pos[0],pos[1]] == foods[n] :
-                            input.append(1)
-                        elif [pos[0],pos[1]] in snakes[n][1:-1] :
-                            input.append(-0.8)
-                        elif pos[0] in [-1,h] or pos[1] in [-1,w] :
-                            input.append(-1)
-                        else :
-                            input.append(0)
-                    output = networks[n].activate(tuple(input))
+                    forward =[snakes[n][0][0]-snakes[n][1][0], snakes[n][0][1]-snakes[n][1][1]]
+                    right = [snakes[n][0][1]-snakes[n][1][1], snakes[n][1][0] - snakes[n][0][0]]
+                    left = [snakes[n][1][1]-snakes[n][0][1], snakes[n][0][0]-snakes[n][1][0]]
+                    input = (foodx, -foodx, foody, -foody, (foodx**2+foody**2)**(1/2), snakes[n][0][0]/h, snakes[n][0][1]/w, 1 - snakes[n][0][0]/h, 1-snakes[n][0][1]/w, danger(forward[0], forward[1], snakes[n], h, w, foods[n]), danger(right[0], right[1], snakes[n], h, w, foods[n]), danger(left[0], left[1], snakes[n], h, w, foods[n]))#,danger(forward[0]+right[0],forward[1]+right[1], snakes[n], h, w),danger(forward[0]+left[0],forward[1]+left[1], snakes[n], h, w),danger(-forward[0]+right[0],-forward[1]+right[1], snakes[n], h, w),danger(-forward[0]+left[0],-forward[1]+left[1], snakes[n], h, w)]
+
+                
+                    output = networks[n].activate(input)
 
 
                     if max(output) == output[1]:
@@ -92,7 +98,7 @@ def main(genomes, config):
                         x, y = snakes[n][0][0] - snakes[n][1][0], snakes[n][1][1] - snakes[n][0][1]
 
 
-                    if snakes[n][0][0] + y in [-1, h] or snakes[n][0][1] + x in [-1, w] or [snakes[n][0][0] + y, snakes[n][0][1] + x] in snakes[n][1:-1]  or counters[n] > h*w:
+                    if snakes[n][0][0] + y in [-1, h] or snakes[n][0][1] + x in [-1, w] or [snakes[n][0][0] + y, snakes[n][0][1] + x] in snakes[n][1:-1]  or counters[n] > h*w + 100:
                         genome_snakes[n].fitness -= 5
                         deadsnakes.append(n)
                     else:
